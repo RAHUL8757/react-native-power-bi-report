@@ -5,4 +5,4 @@ const webView = props => (
     <WebView {...props} />
 );
 
-export default webView;
+export default React.memo(webView);

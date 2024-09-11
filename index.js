@@ -1,50 +1,63 @@
 
-import React, { Component } from 'react';
-import WebView from './webView';
 
-class PowerBIEmbed extends Component {
-  constructor(props) {
-    super(props);
-    this.configuration = this.setConfiguration(props);
-  }
+import React, { useState, useEffect, useMemo } from 'react';
+import WebView from './webView';  // Ensure the path is correct
 
-  setConfiguration = (props) => {
-    let embedConfiguration = {
-      type: 'report',
-      tokenType: 1,
-      accessToken: props.accessToken,
-      embedUrl: props.embedUrl,
-      id: props.id,
-      settings: {
-        filterPaneEnabled: false,
-        navContentPaneEnabled: false,
-        layoutType: 2,
-        panes: {
-          filters: {
-            visible: false
-          },
-          pageNavigation: {
-            visible: false
+const PowerBIEmbed = (props) => {
+  const [configuration, setConfiguration] = useState('');
+
+  useEffect(() => {
+    const generateConfiguration = () => {
+      let embedConfiguration = {
+        type: 'report',
+        tokenType: 1,
+        accessToken: props.accessToken,
+        embedUrl: props.embedUrl,
+        id: props.id,
+        settings: {
+          filterPaneEnabled: false,
+          navContentPaneEnabled: false,
+          layoutType: 2,
+          panes: {
+            filters: {
+              visible: false
+            },
+            pageNavigation: {
+              visible: false
+            }
           }
-        }
-      },
+        },
+      };
+
+      if ('language' in props) {
+        embedConfiguration.settings.localeSettings = {
+          language: props.language,
+          formatLocale: props.language,
+        };
+      }
+
+      if ('embedConfiguration' in props) {
+        embedConfiguration = merge(embedConfiguration, props.embedConfiguration);
+      }
+
+      return JSON.stringify(embedConfiguration);
     };
 
-    if ('language' in props) {
-      embedConfiguration.settings.localeSettings = {
-        language: props.language,
-        formatLocale: props.language,
-      };
-    }
+    const merge = (target, source) => {
+      for (const key of Object.keys(source)) {
+        if (source[key] instanceof Object && target[key]) {
+          merge(target[key], source[key]);
+        } else {
+          target[key] = source[key];
+        }
+      }
+      return target;
+    };
 
-    if ('embedConfiguration' in props) {
-      embedConfiguration = this.merge(embedConfiguration, props.embedConfiguration);
-    }
+    setConfiguration(generateConfiguration());
+  }, [props.accessToken, props.embedUrl, props.id, props.language, props.embedConfiguration]);
 
-    return JSON.stringify(embedConfiguration);
-  }
-
-  getTemplate = (configuration) => (`<!doctype html>
+  const getTemplate = useMemo(() => (configuration) => (`<!doctype html>
     <html>
     <head>
         <meta charset="utf-8" />
@@ -58,43 +71,54 @@ class PowerBIEmbed extends Component {
                 margin: 0;
                 background-color: white;
                 -webkit-overflow-scrolling: touch;
+                overflow: hidden;
+                position: relative; /* Ensure logo positioning */
             }
             iframe {
-                border: 0px;
+                border: 0;
+            }
+            .custom-logo {
+                position: absolute;
+                top: 10px;
+                right: 10px;
+                width: 100px; /* Adjust size as needed */
+                z-index: 1000; /* Ensure logo is above other elements */
+            }
+            /* Hide default Power BI elements */
+            .powerbi-embed .powerbi-header,
+            .powerbi-embed .powerbi-footer,
+            .powerbi-embed .powerbi-loading {
+                display: none !important;
             }
         </style>
     </head>
     <body>
-        <div id="reportContainer"></div>
+        <div id="reportContainer">
+            <!-- Your logo -->
+            <img src="https://filemanager.prod.imperialm.net/filemanager/getFile/MSER_Job_Aid.pdf?filePath=HelmMobileApp/images/Stell_Rewards_Main_logo_FNL.png" class="custom-logo" alt="My Logo" />
+        </div>
         <script>
         var models = window['powerbi-client'].models;
         var config = ${configuration};
         var reportContainer = document.getElementById('reportContainer');
         var report = powerbi.embed(reportContainer, config);
+
+        // Optionally handle custom loading logic here
         </script>
     </body>
     </html>`
+  ), [configuration]);
+
+  const htmlTemplate = useMemo(() => getTemplate(configuration), [getTemplate, configuration]);
+
+  return (
+    <WebView 
+      source={{ html: htmlTemplate }}
+      // startInLoadingState={true}
+      // renderLoading={() => <YourCustomLoader />}
+    />
   );
+};
 
-  merge = (target, source) => {
-    for (const key of Object.keys(source)) {
-      if (source[key] instanceof Object && target[key]) {
-        this.merge(target[key], source[key]);
-      } else {
-        target[key] = source[key];
-      }
-    }
-    return target;
-  }
+export default React.memo(PowerBIEmbed);
 
-  render() {
-    const html = this.getTemplate(this.configuration);
-    return (
-      <WebView 
-      source={{ html }}
-      />
-    );
-  }
-}
-
-export default PowerBIEmbed;
