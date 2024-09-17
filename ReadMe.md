@@ -1,71 +1,103 @@
+
 # PowerBI Embed for React Native
 
-This component opens embeded PowerBI reports. It uses the WebView on Android and the WKWebView on iOS the display them.
+**react-native-power-bi-report** is a React Native component that allows embedding Power BI reports. It leverages `WebView` on Android and `WKWebView` on iOS to display the reports seamlessly within your app.
 
 ## Installation
 
-```
-$ yarn add react-native-power-bi-report
+To install the package, run:
+
+```bash
+yarn add react-native-power-bi-report
 ```
 
-The solution depends on [_react-native-wkwebview-reborn_](https://github.com/CRAlpha/react-native-wkwebview) for iOS, please refer to them if you have any troubles on iOS with linkink.
+### iOS Dependencies
+
+For iOS, this package depends on [react-native-wkwebview-reborn](https://github.com/CRAlpha/react-native-wkwebview). Please refer to their documentation if you encounter any issues with linking on iOS.
 
 ## Usage
 
-`import PowerBIEmbed from 'react-native-power-bi-report';`
+First, import the component:
 
-For a report to display you need at least three parts: AccessToken, Embed URL and the ID of the report. (these can be obtained thru the rest api)
+```javascript
+import PowerBIEmbed from 'react-native-power-bi-report';
+```
+
+To display a report, you need three key parameters: `accessToken`, `embedUrl`, and the `id` of the report. These can be retrieved through the Power BI REST API.
+
+### Basic Example:
 
 ```javascript
 <PowerBIEmbed
-  accessToken="H4sIAAAAAAAEACVW...NH8v_8HNiWyTi4LAAA="
-  embedUrl="https://app.powerbi.com/reportEmbed?reportId=bac25fa7-d58d-40b6-8b01-606d165c3b43&groupId=be8908da-da25-452e-b220-163f52476cdd"
-  id="bac25fa7-d58d-40b6-8b01-606d165c3b43"
+  accessToken="your-access-token"
+  embedUrl="https://app.powerbi.com/reportEmbed?reportId=your-report-id&groupId=your-group-id"
+  id="your-report-id"
 />
 ```
 
-#### Language
+### Language Support
 
-You can also pass the language the report must use
+You can specify a language for the report by passing a `language` prop:
 
 ```javascript
 <PowerBIEmbed
-  accessToken="H4sIAAAAAAAEACVW...NH8v_8HNiWyTi4LAAA="
-  embedUrl="https://app.powerbi.com/reportEmbed?reportId=bac25fa7-d58d-40b6-8b01-606d165c3b43&groupId=be8908da-da25-452e-b220-163f52476cdd"
-  id="bac25fa7-d58d-40b6-8b01-606d165c3b43"
+  accessToken="your-access-token"
+  embedUrl="https://app.powerbi.com/reportEmbed?reportId=your-report-id&groupId=your-group-id"
+  id="your-report-id"
   language="en"
-  embedConfiguration={config}
-  logoUrl="https://example.com/your-custom-logo.png" 
+  logoUrl="https://example.com/custom-logo.png" // Optional custom logo
 />
 ```
 
-#### Embed configuration
+### Custom Embed Configuration
 
-You can pass your own configuration object from the [PowerBI JS library](https://github.com/Microsoft/PowerBI-JavaScript/wiki/Embed-Configuration-Details)
+You can pass a custom configuration object that adheres to the Power BI JavaScript library’s [Embed Configuration](https://github.com/Microsoft/PowerBI-JavaScript/wiki/Embed-Configuration-Details) for additional customization.
 
 ```javascript
 const config = {
-      type: 'report',
-      tokenType: 1,
-      accessToken: "H4sIAAAAAAAEACVW...NH8v_8HNiWyTi4LAAA=",
-      embedUrl: "https://app.powerbi.com/reportEmbed?reportId=bac25fa7-d58d-40b6-8b01-606d165c3b43&groupId=be8908da-da25-452e-b220-163f52476cdd",
-      id: "bac25fa7-d58d-40b6-8b01-606d165c3b43",
-      settings: {
-        filterPaneEnabled: false,
-        navContentPaneEnabled: true,
-      },
-    }
+  type: 'report',
+  tokenType: 1, // Aad token
+  accessToken: "your-access-token",
+  embedUrl: "https://app.powerbi.com/reportEmbed?reportId=your-report-id&groupId=your-group-id",
+  id: "your-report-id",
+  settings: {
+    filterPaneEnabled: false,
+    navContentPaneEnabled: true,
+  },
+};
 
-    <PowerBIEmbed
-      embedConfiguration={config}
-    />
+<PowerBIEmbed embedConfiguration={config} />
 ```
 
-## Roadmap / todo
+### Custom Logo
 
-- More layout options
-- Event communication from PowerBI to component
+If you want to display a custom logo while the report is loading, pass a `logoUrl` prop. This will show your logo instead of Power BI’s default loading animation. The logo will automatically disappear when the report is fully loaded.
+
+```javascript
+<PowerBIEmbed
+  accessToken="your-access-token"
+  embedUrl="https://app.powerbi.com/reportEmbed?reportId=your-report-id&groupId=your-group-id"
+  id="your-report-id"
+  logoUrl="https://example.com/custom-logo.png"
+/>
+```
+
+## Roadmap
+
+Future updates and enhancements include:
+- More layout customization options
+- Event communication between Power BI and the React Native component
+
+## Contributing
+
+We welcome contributions! Feel free to open issues and pull requests to enhance this project.
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## Authors
 
-* [Rahul Singh]
+- **Rahul Singh**
+
+For any inquiries or support, feel free to contact the author.
