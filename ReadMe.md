@@ -34,6 +34,8 @@ You can also pass the language the report must use
   embedUrl="https://app.powerbi.com/reportEmbed?reportId=bac25fa7-d58d-40b6-8b01-606d165c3b43&groupId=be8908da-da25-452e-b220-163f52476cdd"
   id="bac25fa7-d58d-40b6-8b01-606d165c3b43"
   language="en"
+  embedConfiguration={config}
+  logoUrl="https://example.com/your-custom-logo.png" 
 />
 ```
 

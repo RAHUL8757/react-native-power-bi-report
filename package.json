@@ -1,6 +1,6 @@
 {
   "name": "react-native-power-bi-report",
-  "version": "1.0.3",
+  "version": "1.0.7",
   "description": "this is showing power bi report data ",
   "main": "index.js",
   "scripts": {
@@ -11,6 +11,8 @@
   "peerDependencies": {
     "react": "18.2.0",
     "react-native": "0.72.4",
-    "react-native-webview": "^13.10.2"
+    "react-native-webview": "^13.10.2",
+    "powerbi-client": "^2.23.1",
+    "powerbi-client-react": "^1.4.0"
   }
 }
