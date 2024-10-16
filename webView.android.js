@@ -1,8 +1,10 @@
 import React from 'react';
 import { WebView } from 'react-native-webview';
 
-const webView = props => (
-  <WebView {...props} />
+const WebViewComponent = props => (
+  <WebView {...props} 
+  style={{ flex: 1 , backgroundColor: "#f5f5f5"}}
+  />
 );
 
-export default React.memo(webView);
+export default React.memo(WebViewComponent);

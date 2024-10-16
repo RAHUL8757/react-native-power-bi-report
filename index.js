@@ -1,8 +1,19 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { WebView } from 'react-native-webview';
+import { View, StyleSheet } from 'react-native';
+import WebViewComponent from './webView';
 
-const PowerBIEmbed = ({ accessToken, embedUrl, id, language, embedConfiguration, logoUrl }) => {
+const PowerBIEmbed = ({
+  accessToken,
+  embedUrl,
+  id,
+  language,
+  embedConfiguration,
+  logoUrl,
+  enableScroll = false,
+  height
+}) => {
   const [configuration, setConfiguration] = useState('');
+  const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
     const generateConfiguration = () => {
@@ -21,7 +32,7 @@ const PowerBIEmbed = ({ accessToken, embedUrl, id, language, embedConfiguration,
             pageNavigation: { visible: false },
           },
           customLayout: {
-            displayOption: 1, // FitToWidth display
+            displayOption: 1, // FitToWidth display to prevent stretching
           },
         },
       };
@@ -54,105 +65,121 @@ const PowerBIEmbed = ({ accessToken, embedUrl, id, language, embedConfiguration,
     setConfiguration(generateConfiguration());
   }, [accessToken, embedUrl, id, language, embedConfiguration]);
 
-  // Generate the HTML template with custom logo and hiding Power BI elements
-  const getTemplate = useMemo(() => (config) => (`<!doctype html>
-    <html>
-    <head>
-        <meta charset="utf-8" />
-        <script src="https://cdn.jsdelivr.net/npm/powerbi-client@latest/dist/powerbi.min.js"></script>
-        <style>
-            html, body, #reportContainer {
-                width: 100%;
-                height: 100%;
-                margin: 0;
-                background-color: transparent;
-                overflow: hidden;
-                position: relative;
-            }
-            iframe {
-                border: 0;
-            }
-            /* Aggressively hide Power BI logo and branding */
-            .logo, 
-            .powerbi-header, 
-            .powerbi-footer, 
-            .powerbi-loading {
-                display: none !important;
-                opacity: 0 !important;
-                visibility: hidden !important;
-                height: 0 !important;
-                width: 0 !important;
-                pointer-events: none !important;
-            }
-            /* Custom logo styling with white background */
-            .custom-logo {
-                position: absolute;
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%);
-                width: 150px; /* Adjust size as needed */
-                background-color: #fff; /* White background */
-                z-index: 1000;
-                padding: 10px; /* Optional padding for logo */
-                border-radius: 10px; /* Optional rounded corners */
-            }
-        </style>
-    </head>
-    <body>
-        <div id="reportContainer"></div>
-        ${logoUrl ? `<img src="${logoUrl}" class="custom-logo" id="customLogo" alt="Custom Logo" />` : ''}
-        <script>
-          var config = ${config};
-          var reportContainer = document.getElementById('reportContainer');
-          var report;
-          
-          function embedReport() {
-            if (window['powerbi']) {
-              var powerbi = window['powerbi'];
-              report = powerbi.embed(reportContainer, config);
+  const getTemplate = useMemo(() => (config) => {
+    return (`<!doctype html>
+      <html>
+      <head>
+          <meta charset="utf-8" />
+          <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+          <script src="https://cdn.jsdelivr.net/npm/powerbi-client@latest/dist/powerbi.min.js"></script>
+          <style>
+              html, body, #reportContainer {
+                  width: 100%;
+                  height: ${height ? `${height}px` : "100%"}; /* Set height dynamically, fallback to 100% */
+                  margin: 0;
+                  padding: 0;
+                  overflow: ${enableScroll ? 'auto' : 'hidden'}; /* Control scrolling dynamically */
+                  background-color: #f5f5f5; /* Change background color to light gray */
+                  touch-action: ${enableScroll ? 'auto' : 'none'}; /* Disable touch interactions when scrolling is off */
+              }
+              iframe {
+                  border: 0;
+                  width: 100%;
+                  height: 100%;
+              }
+              .logo, 
+              .powerbi-header, 
+              .powerbi-footer, 
+              .powerbi-loading {
+                  display: none !important;
+              }
+              .custom-logo {
+                  position: absolute;
+                  top: 50%;
+                  left: 50%;
+                  transform: translate(-50%, -50%);
+                  width: 150px; 
+                  background-color: #fff; 
+                  z-index: 1000;
+                  padding: 10px; 
+                  border-radius: 10px; 
+              }
+          </style>
+      </head>
+      <body>
+          <div id="reportContainer"></div>
+          ${logoUrl ? `<img src="${logoUrl}" class="custom-logo" id="customLogo" alt="Custom Logo" />` : ''}
+          <script>
+            var config = ${config};
+            var reportContainer = document.getElementById('reportContainer');
+            var report;
 
-              // Hide custom logo when report is fully loaded
-              report.on("loaded", function() {
-                var customLogo = document.getElementById('customLogo');
-                if (customLogo) {
-                  customLogo.style.display = 'none';
-                }
+            function embedReport() {
+              if (window['powerbi']) {
+                var powerbi = window['powerbi'];
+                report = powerbi.embed(reportContainer, config);
 
-                var iframe = reportContainer.getElementsByTagName('iframe')[0];
-                var iframeDocument = iframe.contentWindow.document;
-                
-                // Ensure any remaining Power BI logos or headers are hidden
-                var powerbiLogo = iframeDocument.querySelector('.logo');
-                var powerbiHeader = iframeDocument.querySelector('.powerbi-header');
-                var powerbiFooter = iframeDocument.querySelector('.powerbi-footer');
-                
-                if (powerbiLogo) powerbiLogo.style.display = 'none';
-                if (powerbiHeader) powerbiHeader.style.display = 'none';
-                if (powerbiFooter) powerbiFooter.style.display = 'none';
-              });
-            } else {
-              setTimeout(embedReport, 500); // Retry after 500ms if powerbi is not yet available
+                report.on("loaded", function() {
+                  var customLogo = document.getElementById('customLogo');
+                  if (customLogo) {
+                    customLogo.style.display = 'none';
+                  }
+                  
+                  // Change background color after the report is loaded
+                  report.getPages().then(function(pages) {
+                    pages[0].setBackground({ type: 'transparent' }).then(function() {
+                      var iframe = reportContainer.getElementsByTagName('iframe')[0];
+                      if (iframe) {
+                        var iframeDoc = iframe.contentWindow.document || iframe.contentDocument;
+                        iframeDoc.body.style.backgroundColor = '#f5f5f5';
+                      }
+                    });
+                  });
+                });
+              } else {
+                setTimeout(embedReport, 500);
+              }
             }
-          }
 
-          embedReport();
-        </script>
-    </body>
-    </html>`
-  ), []);
+            embedReport();
+          </script>
+      </body>
+      </html>`);
+  }, [enableScroll, height]);
 
   const htmlTemplate = useMemo(() => getTemplate(configuration), [getTemplate, configuration]);
 
+  const handleLayout = (event) => {
+    const { height } = event.nativeEvent.layout;
+    if (height > 0) {
+      setIsVisible(true);
+    }
+  };
+
   return (
-    <WebView
-      originWhitelist={['*']}
-      source={{ html: htmlTemplate }}
-      javaScriptEnabled={true}
-      domStorageEnabled={true}
-      style={{ flex: 1 }}
-      startInLoadingState={true}
-    />
+    <View style={styles.container} onLayout={handleLayout}>
+      {isVisible && (
+        <WebViewComponent
+          originWhitelist={['*']}
+          source={{ html: htmlTemplate }}
+          javaScriptEnabled={true}
+          domStorageEnabled={true}
+          scrollEnabled={enableScroll} // Control WebView scrolling based on prop
+          style={{ flex: 1 }}
+          startInLoadingState={true}
+          onMessage={(event) => {
+            // Handle messages from the webview if needed
+          }}
+        />
+      )}
+    </View>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+});
 
 export default React.memo(PowerBIEmbed);
