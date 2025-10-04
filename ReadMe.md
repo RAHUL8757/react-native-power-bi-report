@@ -11,9 +11,18 @@ To install the package, run:
 yarn add react-native-power-bi-report
 ```
 
-### iOS Dependencies
+### Dependencies
 
-For iOS, this package depends on [react-native-wkwebview-reborn](https://github.com/CRAlpha/react-native-wkwebview). Please refer to their documentation if you encounter any issues with linking on iOS.
+This package requires `react-native-webview`. It will be automatically installed as a peer dependency.
+
+```bash
+yarn add react-native-webview
+```
+
+For iOS, run:
+```bash
+cd ios && pod install
+```
 
 ## Usage
 
@@ -28,11 +37,29 @@ To display a report, you need three key parameters: `accessToken`, `embedUrl`, a
 ### Basic Example:
 
 ```javascript
-<PowerBIEmbed
-  accessToken="your-access-token"
-  embedUrl="https://app.powerbi.com/reportEmbed?reportId=your-report-id&groupId=your-group-id"
-  id="your-report-id"
-/>
+import React from 'react';
+import { View, StyleSheet } from 'react-native';
+import PowerBIEmbed from 'react-native-power-bi-report';
+
+const MyReport = () => {
+  return (
+    <View style={styles.container}>
+      <PowerBIEmbed
+        accessToken="your-access-token"
+        embedUrl="https://app.powerbi.com/reportEmbed?reportId=your-report-id&groupId=your-group-id"
+        id="your-report-id"
+      />
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+});
+
+export default MyReport;
 ```
 
 ### Language Support
@@ -82,11 +109,26 @@ If you want to display a custom logo while the report is loading, pass a `logoUr
 />
 ```
 
+## Props
+
+| Prop | Type | Required | Default | Description |
+|------|------|----------|---------|-------------|
+| `accessToken` | string | Yes | - | Power BI access token |
+| `embedUrl` | string | Yes | - | Power BI embed URL |
+| `id` | string | Yes | - | Report ID |
+| `language` | string | No | - | Language code (e.g., 'en', 'es') |
+| `embedConfiguration` | object | No | - | Custom Power BI embed configuration |
+| `logoUrl` | string | No | - | Custom logo URL to display while loading |
+| `enableScroll` | boolean | No | false | Enable/disable scrolling in the report |
+| `height` | number | No | - | Custom height in pixels |
+
 ## Roadmap
 
 Future updates and enhancements include:
+- TypeScript support
 - More layout customization options
 - Event communication between Power BI and the React Native component
+- Support for dashboards and tiles
 
 ## Contributing
 

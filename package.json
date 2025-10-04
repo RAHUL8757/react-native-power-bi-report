@@ -1,24 +1,47 @@
 {
   "name": "react-native-power-bi-report",
-  "version": "1.1.1",
+  "version": "1.2.0",
   "description": "A React Native package for displaying Power BI reports using WebView.",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "prepublishOnly": "echo 'Ready to publish'",
+    "version": "echo 'Version updated'"
   },
   "author": "Rahul Singh",
-  "license": "ISC",
+  "license": "MIT",
   "repository": {
     "type": "git",
     "url": "https://github.com/RAHUL8757/react-native-power-bi-report"
   },
   "peerDependencies": {
-   "react": "18.3.1",
-   "react-native": "^0.79.0",
-   "react-native-webview": "^13.10.2"
+   "react": ">=16.8.0",
+   "react-native": ">=0.60.0",
+   "react-native-webview": ">=11.0.0"
   },
   "keywords": [
     "react-native",
-    "powerbi"
-  ]
+    "powerbi",
+    "power-bi",
+    "embed",
+    "reporting",
+    "analytics",
+    "business-intelligence",
+    "webview",
+    "ios",
+    "android"
+  ],
+  "homepage": "https://github.com/RAHUL8757/react-native-power-bi-report#readme",
+  "bugs": {
+    "url": "https://github.com/RAHUL8757/react-native-power-bi-report/issues"
+  },
+  "files": [
+    "index.js",
+    "webView.android.js",
+    "webView.ios.js",
+    "ReadMe.md"
+  ],
+  "dependencies": {
+    "prop-types": "^15.8.1"
+  }
 }

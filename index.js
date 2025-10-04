@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { View, StyleSheet } from 'react-native';
+import PropTypes from 'prop-types';
 import WebViewComponent from './webView';
 
 const PowerBIEmbed = ({
@@ -15,45 +16,11 @@ const PowerBIEmbed = ({
   const [configuration, setConfiguration] = useState('');
   const [isVisible, setIsVisible] = useState(false);
 
-  useEffect(() => {
-    const generateConfiguration = () => {
-      let config = {
-        type: 'report',
-        tokenType: 1, // Aad token
-        accessToken,
-        embedUrl,
-        id,
-        settings: {
-          filterPaneEnabled: false,
-          navContentPaneEnabled: false,
-          layoutType: 2, // Mobile layout
-          panes: {
-            filters: { visible: false },
-            pageNavigation: { visible: false },
-          },
-          customLayout: {
-            displayOption: 1, // FitToWidth display to prevent stretching
-          },
-        },
-      };
-
-      if (language) {
-        config.settings.localeSettings = {
-          language,
-          formatLocale: language,
-        };
-      }
-
-      if (embedConfiguration) {
-        config = merge(config, embedConfiguration);
-      }
-
-      return JSON.stringify(config);
-    };
-
-    const merge = (target, source) => {
+  // Memoize the merge function to avoid recreating it on every render
+  const merge = useMemo(() => {
+    return (target, source) => {
       for (const key of Object.keys(source)) {
-        if (source[key] instanceof Object && target[key]) {
+        if (source[key] instanceof Object && !Array.isArray(source[key]) && target[key]) {
           merge(target[key], source[key]);
         } else {
           target[key] = source[key];
@@ -61,9 +28,47 @@ const PowerBIEmbed = ({
       }
       return target;
     };
+  }, []);
 
-    setConfiguration(generateConfiguration());
-  }, [accessToken, embedUrl, id, language, embedConfiguration]);
+  // Memoize configuration generation
+  const generatedConfig = useMemo(() => {
+    let config = {
+      type: 'report',
+      tokenType: 1, // Aad token
+      accessToken,
+      embedUrl,
+      id,
+      settings: {
+        filterPaneEnabled: false,
+        navContentPaneEnabled: false,
+        layoutType: 2, // Mobile layout
+        panes: {
+          filters: { visible: false },
+          pageNavigation: { visible: false },
+        },
+        customLayout: {
+          displayOption: 1, // FitToWidth display to prevent stretching
+        },
+      },
+    };
+
+    if (language) {
+      config.settings.localeSettings = {
+        language,
+        formatLocale: language,
+      };
+    }
+
+    if (embedConfiguration) {
+      config = merge(config, embedConfiguration);
+    }
+
+    return JSON.stringify(config);
+  }, [accessToken, embedUrl, id, language, embedConfiguration, merge]);
+
+  useEffect(() => {
+    setConfiguration(generatedConfig);
+  }, [generatedConfig]);
 
   const getTemplate = useMemo(() => (config) => {
     return (`<!doctype html>
@@ -75,12 +80,12 @@ const PowerBIEmbed = ({
           <style>
               html, body, #reportContainer {
                   width: 100%;
-                  height: ${height ? `${height}px` : "100%"}; /* Set height dynamically, fallback to 100% */
+                  height: ${height ? `${height}px` : "100%"};
                   margin: 0;
                   padding: 0;
-                  overflow: ${enableScroll ? 'auto' : 'hidden'}; /* Control scrolling dynamically */
-                  background-color: #f5f5f5; /* Change background color to light gray */
-                  touch-action: ${enableScroll ? 'auto' : 'none'}; /* Disable touch interactions when scrolling is off */
+                  overflow: ${enableScroll ? 'auto' : 'hidden'};
+                  background-color: #f5f5f5;
+                  touch-action: ${enableScroll ? 'auto' : 'none'};
               }
               iframe {
                   border: 0;
@@ -125,16 +130,32 @@ const PowerBIEmbed = ({
                     customLogo.style.display = 'none';
                   }
                   
-                  // Change background color after the report is loaded
                   report.getPages().then(function(pages) {
-                    pages[0].setBackground({ type: 'transparent' }).then(function() {
-                      var iframe = reportContainer.getElementsByTagName('iframe')[0];
-                      if (iframe) {
-                        var iframeDoc = iframe.contentWindow.document || iframe.contentDocument;
-                        iframeDoc.body.style.backgroundColor = '#f5f5f5';
-                      }
-                    });
+                    if (pages.length > 0) {
+                      pages[0].setBackground({ type: 'transparent' }).then(function() {
+                        var iframe = reportContainer.getElementsByTagName('iframe')[0];
+                        if (iframe) {
+                          try {
+                            var iframeDoc = iframe.contentWindow.document || iframe.contentDocument;
+                            if (iframeDoc && iframeDoc.body) {
+                              iframeDoc.body.style.backgroundColor = '#f5f5f5';
+                            }
+                          } catch (e) {
+                            // Cross-origin access might be blocked
+                            console.warn('Could not access iframe document:', e);
+                          }
+                        }
+                      }).catch(function(err) {
+                        console.warn('Could not set background:', err);
+                      });
+                    }
+                  }).catch(function(err) {
+                    console.warn('Could not get pages:', err);
                   });
+                });
+
+                report.on("error", function(event) {
+                  console.error('Power BI Report Error:', event.detail);
                 });
               } else {
                 setTimeout(embedReport, 500);
@@ -145,7 +166,7 @@ const PowerBIEmbed = ({
           </script>
       </body>
       </html>`);
-  }, [enableScroll, height]);
+  }, [enableScroll, height, logoUrl]);
 
   const htmlTemplate = useMemo(() => getTemplate(configuration), [getTemplate, configuration]);
 
@@ -181,5 +202,24 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 });
+
+PowerBIEmbed.propTypes = {
+  accessToken: PropTypes.string.isRequired,
+  embedUrl: PropTypes.string.isRequired,
+  id: PropTypes.string.isRequired,
+  language: PropTypes.string,
+  embedConfiguration: PropTypes.object,
+  logoUrl: PropTypes.string,
+  enableScroll: PropTypes.bool,
+  height: PropTypes.number,
+};
+
+PowerBIEmbed.defaultProps = {
+  enableScroll: false,
+  language: undefined,
+  embedConfiguration: undefined,
+  logoUrl: undefined,
+  height: undefined,
+};
 
 export default React.memo(PowerBIEmbed);
